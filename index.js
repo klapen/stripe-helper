@@ -21,6 +21,9 @@ const payload = {
     }
 }
 
+////////////////////
+// Payment method //
+////////////////////
 program
     .description('Create Payment Method on Stripe')
     .command('createPaymentMethod')
@@ -98,6 +101,9 @@ program
             
     });
 
+//////////////////
+// Subscription //
+//////////////////
 program
     .description('Cancel subscription on Stripe')
     .usage('cancelSubscription')
@@ -114,25 +120,6 @@ program
                 console.log(`Error canceling subscription: ${err}`)
                 process.exit(1);
             });
-    });
-
-program
-    .description('Get customer on Stripe')
-    .usage('getCustomer')
-    .command('getCustomer [id]')
-    .action( async (id) => {
-        console.log(`-> Get customer ${id}`);
-        stripe.customers.retrieve(id)
-            .then( customer => {
-                console.log(`--> Customer`);
-                console.log(customer)
-                console.log('-> Everything ran smooth. Bye!');
-                process.exit(0);
-            }).catch( err => {
-                console.log(`Error getting customer: ${err}`)
-                process.exit(1);
-            });
-            
     });
 
 program
@@ -175,6 +162,69 @@ program
             
     });
 
+//////////////
+// Customer //
+//////////////
+program
+    .description('Create customer on Stripe')
+    .usage('createCustomer')
+    .command('createCustomer [email]')
+    .action( async (email) => {
+        console.log(`-> Create customer ${email}`);
+        stripe.customers.create({ email })
+            .then( customer => {
+                console.log(`--> Customer`);
+                console.log(customer)
+                console.log('-> Everything ran smooth. Bye!');
+                process.exit(0);
+            }).catch( err => {
+                console.log(`Error creating customer: ${err}`)
+                process.exit(1);
+            });
+            
+    });
+
+program
+    .description('Delete customer on Stripe')
+    .usage('delCustomer')
+    .command('delCustomer [id]')
+    .action( async (id) => {
+        console.log(`-> Delete customer ${id}`);
+        stripe.customers.del(id)
+            .then( customer => {
+                console.log(`--> Customer`);
+                console.log(customer)
+                console.log('-> Everything ran smooth. Bye!');
+                process.exit(0);
+            }).catch( err => {
+                console.log(`Error deleting customer: ${err}`)
+                process.exit(1);
+            });
+            
+    });
+
+program
+    .description('Get customer on Stripe')
+    .usage('getCustomer')
+    .command('getCustomer [id]')
+    .action( async (id) => {
+        console.log(`-> Get customer ${id}`);
+        stripe.customers.retrieve(id)
+            .then( customer => {
+                console.log(`--> Customer`);
+                console.log(customer)
+                console.log('-> Everything ran smooth. Bye!');
+                process.exit(0);
+            }).catch( err => {
+                console.log(`Error getting customer: ${err}`)
+                process.exit(1);
+            });
+            
+    });
+
+/////////////
+// Balance //
+/////////////
 program
     .description('Get Stripe account balance')
     .command('getBalance')
