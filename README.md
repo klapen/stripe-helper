@@ -18,6 +18,7 @@ First clone and install dependencies:
 $ git clone git@github.com:orlando-homer/stripe-helper.git
 $ cd stripe-helper
 $ npm install
+$ export STRIPE_SECRET=stripe_account_seccret
 ```
 
 To use it:
