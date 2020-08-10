@@ -15,15 +15,15 @@ Simple NodeJS helper tool to perform some actions on Stripe Accounts, for testin
 First clone and install dependencies:
 
 ```sh
-$git clone git@github.com:orlando-homer/stripe-helper.git
-$cd stripe-helper
-$npm install
+$ git clone git@github.com:orlando-homer/stripe-helper.git
+$ cd stripe-helper
+$ npm install
 ```
 
 To use it:
 
 ```sh
-$npm start [command][..opts]
+$ npm start [command][..opts]
 ```
 
 The avaible commands are:
