@@ -29,6 +29,7 @@ $ npm start [command][..opts]
 
 The avaible commands are:
 
+- `getSubscriptionsByPlanName [planName] [outputfile]` => Requires Postgres variables
 - `createPaymentMethod`
 - `getPaymentMethod [id]`
 - `detachPaymentMethod [id]`

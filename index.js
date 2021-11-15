@@ -1,9 +1,19 @@
 const chalk    = require('chalk');
 const figlet   = require('figlet');
 const program  = require('commander');
+const fs       = require('fs');
+const pg       = require('pg');
 
 const stripe_secret = process.env.STRIPE_SECRET
 const stripe = require('stripe')(stripe_secret);
+
+const pgClient = new pg.Client({
+  user: process.env.DB_USERNAME,
+  host: process.env.DB_HOST_URI,
+  database: process.env.DB_DATABASE,
+  password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT,
+});
 
 console.log(
     chalk.green(
@@ -128,7 +138,7 @@ program
     .command('getSubscription [id]')
     .action( async (id) => {
         console.log(`-> Get subscription ${id}`);
-        stripe.customers.retrieve(id)
+        stripe.subscriptions.retrieve(id)
             .then( sub => {
                 console.log(`--> Subscription`);
                 console.log(sub)
@@ -242,5 +252,95 @@ program
             });            
     });
 
+/////////////////////////////
+// Get users by price name //
+////////////////////////////
+function mergeDataFromDB(subs, cb){
+    pgClient.connect();
+    const script = `select ss.stripe_subscription_id as "id", s2.original_start as "orderDate", u2.id as "userId", u2.parse_id as "parseId" from stripe_subscription ss inner join "subscription" s2 on ss.subscription_id = s2.id inner join "user" u2 on s2.user_id = u2.id where ss.stripe_subscription_id  in ('${subs.map( (s) => s.id).join("','")}')`;
+
+    return pgClient.query(script)
+        .then( res => {
+            const rows = res.rows.reduce( (acc, curr) => {
+                const {id, ...info} = curr;
+                acc[id] = info;
+                return acc;
+            }, {});
+
+            const data = subs.map( (sub) => {
+                const homerData = rows[sub.id];
+                return homerData ? {...sub, ...homerData} : {...sub};
+            });
+            return cb(data);
+        })
+        .catch(err => {
+            console.log('<<<< BD error >>>'. err);
+            process.exit(1);
+          });
+}
+
+function saveToCsv(data, cb){
+    const headers =  [
+        'orderDate', 'userId', 'parseId',
+        'stripeSubscriptionId', 'invoiceId', 'product', 'quantity', 'customerName',
+        'country', 'shippingAddress', 'city', 'state', 'zipcode'];
+    let csv = data.map( (row) => {
+        const shippingData = row.customer.shipping;
+        const address = shippingData.address;
+        const orderDate = row.orderDate ? row.orderDate.toISOString() : undefined;
+        return [
+            orderDate,
+            row.userId,
+            row.parseId,
+            row.id,
+            row.latest_invoice,
+            'v10 blue',
+            1,
+            shippingData.name,
+            address.country,
+            `${address.line1} ${address.line2 ?? ''}`.trim(),
+            address.city,
+            address.state,
+            address.postal_code
+        ]
+    });
+
+    csv.unshift(headers.join(','));
+    csv = csv.join('\r\n');
+    return cb(csv);
+}
+program
+    .description('Get users by plan price')
+    .command('getSubscriptionsByPlanName [planName] [outputfile]')
+    .action( async (planName, outputfile) => {
+        console.log(`-> Getting subscriptions by plan name ${planName}`);
+        const limit = 10000;
+        stripe.subscriptions.list({
+            price: planName, expand: ['data.customer']
+        }).autoPagingToArray({limit})
+            .then( subs => {
+                console.log('--> Subscription list');
+                if(!outputfile){
+                    console.log(subs)
+                    console.log('-> Everything ran smooth. Bye!');
+                    process.exit(0);
+                }else{
+                    console.log('--> In CSV formant', outputfile)
+                    mergeDataFromDB(subs, (data) => {
+                        saveToCvs(data, (csv) =>{
+                            console.log(csv)
+                            fs.writeFile(`./${outputfile}`, csv, (err) => {
+                                if (err) return console.error('<<<<< Error saving file>>>>>', err);                  
+                                console.log(`--> File ${outputfile} saved. Bye!`)
+                                process.exit(0);
+                            });
+                        });
+                    });
+                };
+            }).catch( err => {
+                console.log(`Error getting subscriptions by plan name: ${err}`)
+                process.exit(1);
+            });
+    });
 
 program.parse(process.argv);
