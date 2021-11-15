@@ -309,19 +309,28 @@ function saveToCsv(data, cb){
     csv = csv.join('\r\n');
     return cb(csv);
 }
+
+function get10Digits(date){
+    return Math.floor(date.getTime()/1000);
+}
 program
     .description('Get users by plan price')
-    .command('getSubscriptionsByPlanName [planName] [outputfile]')
-    .action( async (planName, outputfile) => {
+    .command('getSubscriptionsByPlanName [planName] [gte] [lte] [outputfile]')
+    .action( async (planName, gte, lte, outputfile) => {
         console.log(`-> Getting subscriptions by plan name ${planName}`);
         const limit = 10000;
         stripe.subscriptions.list({
-            price: planName, expand: ['data.customer']
+            price: planName, expand: ['data.customer'],
+            created: {
+                gte: get10Digits(new Date(gte)),
+                lte: get10Digits(new Date(lte)),
+            }
         }).autoPagingToArray({limit})
             .then( subs => {
                 console.log('--> Subscription list');
                 if(!outputfile){
-                    console.log(subs)
+                    console.log(`--> Found ${subs.length} subs`)
+                    console.log(subs);
                     console.log('-> Everything ran smooth. Bye!');
                     process.exit(0);
                 }else{
