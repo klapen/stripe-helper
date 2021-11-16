@@ -279,8 +279,9 @@ function mergeDataFromDB(subs, cb){
           });
 }
 
-function saveToCsv(data, cb){
+function saveToCsv(planName, data, cb){
     const headers =  [
+        'planName',
         'orderDate', 'userId', 'parseId',
         'stripeSubscriptionId', 'invoiceId', 'product', 'quantity', 'customerName',
         'country', 'shippingAddress', 'city', 'state', 'zipcode'];
@@ -289,6 +290,7 @@ function saveToCsv(data, cb){
         const address = shippingData.address;
         const orderDate = row.orderDate ? row.orderDate.toISOString() : undefined;
         return [
+            planName,
             orderDate,
             row.userId,
             row.parseId,
@@ -336,7 +338,7 @@ program
                 }else{
                     console.log('--> In CSV formant', outputfile)
                     mergeDataFromDB(subs, (data) => {
-                        saveToCvs(data, (csv) =>{
+                        saveToCsv(planName, data, (csv) => {
                             console.log(csv)
                             fs.writeFile(`./${outputfile}`, csv, (err) => {
                                 if (err) return console.error('<<<<< Error saving file>>>>>', err);                  
