@@ -282,7 +282,7 @@ function mergeDataFromDB(subs, cb){
 function saveToCsv(planName, data, cb){
     const headers =  [
         'planName',
-        'orderDate', 'userId', 'parseId',
+        'orderDate', 'userId', 'parseId', 'email',
         'stripeSubscriptionId', 'invoiceId', 'product', 'quantity', 'customerName',
         'country', 'shippingAddress', 'city', 'state', 'zipcode'];
     let csv = data.map( (row) => {
@@ -294,6 +294,7 @@ function saveToCsv(planName, data, cb){
             orderDate,
             row.userId,
             row.parseId,
+            row.customer.email,
             row.id,
             row.latest_invoice,
             'v10 blue',
